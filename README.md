@@ -21,6 +21,7 @@ No external dataset is required. All data are generated synthetically by the scr
 SNN_Empirical_Validation_PAPER_FINAL_Suraj_Honnuraiah.py
 README.md
 requirements.txt
+LICENSE
 ```
 
 ---
@@ -137,6 +138,8 @@ Full-grid design:
 | Main plotted M\*(S) threshold | 0.75 |
 
 The full run is computationally expensive. Runtime depends on hardware, PyTorch installation, selected device, thread count, and whether deterministic kernels are requested. Runs can take many hours to multiple days on local hardware.
+
+Implementation note: the SNN forward pass uses explicit time-step updates for clarity and auditability of membrane state, reset, leak, lateral inhibition, WTA competition, and refractory dynamics. This can introduce Python or GPU kernel-launch overhead, but the sequence lengths and model sizes used here are modest and appropriate for the finite synthetic validation experiments reported in the paper.
 
 For a stricter deterministic CPU run:
 
@@ -263,7 +266,7 @@ M\*(S) is selected using validation accuracy:
 best_val_acc >= threshold
 ```
 
-Held-out test accuracy is used for final performance summaries and accuracy-versus-sequence-length plots. It is **not** used to decide M\*(S). This avoids test-set leakage.
+Here `best_val_acc` is a backward-compatible column name for the validation accuracy at the checkpoint selected by minimum validation loss. Held-out test accuracy is used for final performance summaries and accuracy-versus-sequence-length plots. It is **not** used to decide M\*(S). This avoids test-set leakage.
 
 ### Checkpoint safety
 
@@ -375,6 +378,8 @@ assert len(missing) == 0
 assert sorted(params["variant"].tolist()) == sorted(config["variants_to_run"])
 assert set(config["variants_to_run"]).issubset(set(variants["variant"]))
 assert "best_val_acc" in raw.columns
+assert "val_acc_at_best_val_loss" in raw.columns
+assert "mstar_selection_acc" in raw.columns
 assert "test_acc" in raw.columns
 assert "selection_metric" in mstar.columns
 assert set(mstar["selection_metric"].dropna().unique()) <= {"best_val_acc"}
@@ -401,7 +406,7 @@ This measures final held-out performance after training with the largest sample 
 
 ### M\*(S)
 
-M\*(S) is the smallest training-set size at which validation accuracy reaches a specified threshold. If the threshold is not reached within the tested sample grid, the point is marked as right-censored.
+M\*(S) is the smallest training-set size at which validation accuracy reaches a specified threshold. In the output tables, `best_val_acc` denotes validation accuracy at the best-validation-loss checkpoint. If the threshold is not reached within the tested sample grid, the point is marked as right-censored.
 
 ### Right-censoring
 
